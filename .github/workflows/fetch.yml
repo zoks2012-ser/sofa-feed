@@ -1,0 +1,35 @@
+name: fetch-sofascore-test
+
+# Rucno pokretanje (dugme Run workflow) + probni raspored na svakih 10 min.
+# Za PROBU ne cuvamo nista u repo - rezultat ide kao "artifact" koji skines.
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/10 * * * *'
+
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install deps
+        run: pip install -r requirements.txt
+
+      - name: Install headless Chromium
+        run: python -m playwright install --with-deps chromium
+
+      - name: Fetch SofaScore
+        run: python fetch_sofa.py
+
+      - name: Upload result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sofa-json
+          path: out/
